@@ -3,6 +3,17 @@ import { MdWbSunny, MdMyLocation, MdOutlineLocationOn } from 'react-icons/md';
 import SearchBox from './SearchBox';
 type Props = {};
 
+// Заглушка для onChange
+const handleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+  // Нічого не робимо
+};
+
+// Заглушка для onSubmit
+const handleSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
+  // Нічого не робимо
+  event.preventDefault(); // Зазвичай для обробки форми потрібно запобігти її стандартному поведінці
+};
+
 export default function Navbar({}: Props) {
 	return (
 		<nav className='shadow-sm sticky top-0 left-0 z-50 bg-white'>
@@ -16,7 +27,11 @@ export default function Navbar({}: Props) {
 					<MdOutlineLocationOn className='text-3xl' />
 					<p className='tetx-slate-900/80 text-sm'>Ukraine</p>
 					<div>
-						<SearchBox />
+						<SearchBox
+							value='string'
+							onChange={handleChange}
+							onSubmit={handleSubmit}
+						/>
 					</div>
 				</section>
 			</div>
