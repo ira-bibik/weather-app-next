@@ -15,7 +15,9 @@ export default function Navbar({}: Props) {
 					<MdMyLocation className='text-2xl text-gray-400 hover:opacity-80 cursor-pointer' />
 					<MdOutlineLocationOn className='text-3xl' />
 					<p className='tetx-slate-900/80 text-sm'>Ukraine</p>
-					<SearchBox />
+					<div>
+						<SearchBox />
+					</div>
 				</section>
 			</div>
 		</nav>
