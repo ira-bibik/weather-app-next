@@ -5,6 +5,7 @@ import ForecastWeatherDetail from '@/components/ForecastWeatherDetail';
 import Navbar from '@/components/Navbar';
 import WeatherDetails from '@/components/WeatherDetails';
 import WeatherIcon from '@/components/WeatherIcon';
+import { WeatherData } from '@/types/types';
 import { convertKelvinToCelsius } from '@/utils/convertKelvinToCelsius';
 import { convertWindSpeed } from '@/utils/convertWindSpeed';
 import { getDayOrNightIcon } from '@/utils/getDayOrNigthIcon';
@@ -12,80 +13,6 @@ import { metersToKilometers } from '@/utils/metersToKilometers';
 import axios from 'axios';
 import { format, fromUnixTime, parseISO } from 'date-fns';
 import { useQuery } from 'react-query';
-
-interface WeatherData {
-	cod: string;
-	message: number;
-	cnt: number;
-	list: WeatherListItem[];
-	city: City;
-}
-
-interface WeatherListItem {
-	dt: number; // Unix timestamp
-	main: MainWeatherInfo;
-	weather: WeatherCondition[];
-	clouds: Clouds;
-	wind: Wind;
-	visibility: number;
-	pop: number; // Probability of precipitation
-	rain: Rain;
-	sys: System;
-	dt_txt: string; // Date and time of the forecast
-}
-
-interface MainWeatherInfo {
-	temp: number; // Temperature in Kelvin
-	feels_like: number; // Feels like temperature in Kelvin
-	temp_min: number; // Minimum temperature in Kelvin
-	temp_max: number; // Maximum temperature in Kelvin
-	pressure: number; // Atmospheric pressure in hPa
-	sea_level: number; // Atmospheric pressure at sea level in hPa
-	grnd_level: number; // Atmospheric pressure at ground level in hPa
-	humidity: number; // Humidity percentage
-	temp_kf: number; // Temperature coefficient
-}
-
-interface WeatherCondition {
-	id: number; // Weather condition id
-	main: string; // Group of weather parameters
-	description: string; // Weather condition description
-	icon: string; // Weather icon id
-}
-
-interface Clouds {
-	all: number; // Cloudiness percentage
-}
-
-interface Wind {
-	speed: number; // Wind speed in meter/sec
-	deg: number; // Wind direction in degrees
-	gust?: number; // Wind gust in meter/sec (optional)
-}
-
-interface Rain {
-	'3h': number; // Rain volume for the last 3 hours in mm
-}
-
-interface System {
-	pod: string; // Part of the day (day or night)
-}
-
-interface City {
-	id: number;
-	name: string;
-	coord: Coordinates;
-	country: string;
-	population: number;
-	timezone: number; // Timezone offset in seconds
-	sunrise: number; // Sunrise time in Unix timestamp
-	sunset: number; // Sunset time in Unix timestamp
-}
-
-interface Coordinates {
-	lat: number; // Latitude
-	lon: number; // Longitude
-}
 
 export default function Home() {
 	const { isLoading, error, data } = useQuery<WeatherData>(
@@ -98,9 +25,25 @@ export default function Home() {
 		},
 	);
 
-	console.log(data);
-
 	const firstData = data?.list[0];
+
+	const uniqueDates = [
+		...new Set(
+			data?.list.map(
+				entry => new Date(entry.dt * 1000).toISOString().split('I')[0],
+			),
+		),
+	];
+
+	//Filtering data to get first entry after 6AM for each unique date
+
+	const firstDateForEachDate = uniqueDates.map(date => {
+		return data?.list.find(entry => {
+			const entryDate = new Date(entry.dt * 1000).toISOString().split('I')[0];
+			const entryTime = new Date(entry.dt * 1000).getHours();
+			return entryDate === date && entryTime >= 6;
+		});
+	});
 
 	if (isLoading)
 		return (
@@ -210,7 +153,31 @@ export default function Home() {
 				{/* 7 days forecast data */}
 				<section className='flex w-full flex-col gap-4'>
 					<p className='text-2xl'>Forecast (7 days)</p>
-					<ForecastWeatherDetail />
+					{firstDateForEachDate.map((el, index) => (
+						el && <ForecastWeatherDetail
+							key={index}
+							description={el?.weather[0].description ?? ''}
+							weatherIcon={el?.weather[0].icon ?? '01d'}
+							date={el ? format(parseISO(el.dt_txt), 'dd.MM') : 'dd.MM'}
+							day={el ? format(parseISO(el.dt_txt), 'EEEE') : 'EEEE'}
+							feelsLike={el?.main.feels_like ?? 0}
+							temp={el?.main.temp ?? 0}
+							tempMin={el?.main.temp_min ?? 0}
+							tempMax={el?.main.temp_max ?? 0}
+							airPressure={`${el?.main.pressure} hPa`}
+							visability={metersToKilometers(el?.visibility ?? 10000)}
+							humidity={`${el?.main.humidity}%`}
+							windSpeed={convertWindSpeed(el?.wind.speed ?? 1.64)}
+							sunrise={format(
+								fromUnixTime(data?.city.sunrise ?? 1702949452),
+								'H:mm',
+							)}
+							sunset={format(
+								fromUnixTime(data?.city.sunset ?? 1724000050),
+								'H:mm',
+							)}
+						/>
+					))}
 				</section>
 			</main>
 		</div>
