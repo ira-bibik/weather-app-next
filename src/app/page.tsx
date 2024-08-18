@@ -19,7 +19,7 @@ export default function Home() {
 		'repoData',
 		async () => {
 			const { data } = await axios.get(
-				`https://api.openweathermap.org/data/2.5/forecast?q=Poltava&appid=${process.env.NEXT_PUBLIC_WEATHER_KEY}&cnt=8`,
+				`https://api.openweathermap.org/data/2.5/forecast?q=Poltava&appid=${process.env.NEXT_PUBLIC_WEATHER_KEY}&cnt=56`,
 			);
 			return data;
 		},
@@ -30,16 +30,15 @@ export default function Home() {
 	const uniqueDates = [
 		...new Set(
 			data?.list.map(
-				entry => new Date(entry.dt * 1000).toISOString().split('I')[0],
+				entry => new Date(entry.dt * 1000).toISOString().split('T')[0],
 			),
 		),
 	];
 
-	//Filtering data to get first entry after 6AM for each unique date
-
-	const firstDateForEachDate = uniqueDates.map(date => {
+	// Filtering data to get the first entry after 6 AM for each unique date
+	const firstDataForEachDate = uniqueDates.map(date => {
 		return data?.list.find(entry => {
-			const entryDate = new Date(entry.dt * 1000).toISOString().split('I')[0];
+			const entryDate = new Date(entry.dt * 1000).toISOString().split('T')[0];
 			const entryTime = new Date(entry.dt * 1000).getHours();
 			return entryDate === date && entryTime >= 6;
 		});
@@ -153,8 +152,8 @@ export default function Home() {
 				{/* 7 days forecast data */}
 				<section className='flex w-full flex-col gap-4'>
 					<p className='text-2xl'>Forecast (7 days)</p>
-					{firstDateForEachDate.map((el, index) => (
-						el && <ForecastWeatherDetail
+					{firstDataForEachDate.map((el, index) => (
+						<ForecastWeatherDetail
 							key={index}
 							description={el?.weather[0].description ?? ''}
 							weatherIcon={el?.weather[0].icon ?? '01d'}
