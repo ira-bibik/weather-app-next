@@ -1,12 +1,16 @@
 'use client';
 
 import Container from '@/components/Container';
+import ForecastWeatherDetail from '@/components/ForecastWeatherDetail';
 import Navbar from '@/components/Navbar';
+import WeatherDetails from '@/components/WeatherDetails';
 import WeatherIcon from '@/components/WeatherIcon';
 import { convertKelvinToCelsius } from '@/utils/convertKelvinToCelsius';
+import { convertWindSpeed } from '@/utils/convertWindSpeed';
 import { getDayOrNightIcon } from '@/utils/getDayOrNigthIcon';
+import { metersToKilometers } from '@/utils/metersToKilometers';
 import axios from 'axios';
-import { format, parseISO } from 'date-fns';
+import { format, fromUnixTime, parseISO } from 'date-fns';
 import { useQuery } from 'react-query';
 
 interface WeatherData {
@@ -157,7 +161,10 @@ export default function Home() {
 										{/* Wether icon */}
 										{/* <WeatherIcon iconname={el?.weather[0].icon}></WeatherIcon> */}
 										<WeatherIcon
-											iconname={getDayOrNightIcon(el?.weather[0].icon, el.dt_txt)}
+											iconname={getDayOrNightIcon(
+												el?.weather[0].icon,
+												el.dt_txt,
+											)}
 										></WeatherIcon>
 										<p className=''>
 											{convertKelvinToCelsius(el?.main.temp ?? 304.58)}°C
@@ -167,9 +174,44 @@ export default function Home() {
 							</div>
 						</Container>
 					</div>
+					{/* Today forecast details */}
+					<div className='flex gap-4'>
+						{/* left container */}
+						<Container className='w-fit justify-center flex-col px-4 items-center'>
+							<p className='capitalize text-center'>
+								{firstData?.weather[0].description}
+							</p>
+							<WeatherIcon
+								iconname={getDayOrNightIcon(
+									firstData?.weather[0].icon ?? '',
+									firstData?.dt_txt ?? '',
+								)}
+							></WeatherIcon>
+						</Container>
+						{/* right container */}
+						<Container className='bg-yellow-300/80 px-6 gap-4 justify-between overflow-x-auto'>
+							<WeatherDetails
+								airPressure={`${firstData?.main.pressure} hPa`}
+								visability={metersToKilometers(firstData?.visibility ?? 1000)}
+								humidity={`${firstData?.main.humidity}%`}
+								windSpeed={convertWindSpeed(firstData?.wind.speed ?? 1.64)}
+								sunrise={format(
+									fromUnixTime(data?.city.sunrise ?? 1702949452),
+									'H:mm',
+								)}
+								sunset={format(
+									fromUnixTime(data?.city.sunset ?? 1724000050),
+									'H:mm',
+								)}
+							/>
+						</Container>
+					</div>
 				</section>
 				{/* 7 days forecast data */}
-				<section></section>
+				<section className='flex w-full flex-col gap-4'>
+					<p className='text-2xl'>Forecast (7 days)</p>
+					<ForecastWeatherDetail />
+				</section>
 			</main>
 		</div>
 	);
